@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Diego Jauregui</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ---- PIN gate ---- */
+    #pinGate {
+      position: fixed;
+      inset: 0;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    #pinGate.hidden { display: none; }
+
+    #pinBox {
+      background: #fff;
+      border: 1px solid #e4e4e4;
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      width: 280px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    #pinLabel {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+    #pinLabel.error { color: #ef4444; }
+
+    #pinDots {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 2rem;
+    }
+    #pinDots span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #pinDots span.filled {
+      background: #111;
+      border-color: #111;
+    }
+    #pinDots span.error {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    #pinPad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+
+    .pin-key {
+      height: 52px;
+      border: 1px solid #e4e4e4;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #111;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .pin-key:hover   { background: #f5f5f5; }
+    .pin-key:active  { background: #eee; transform: scale(0.95); }
+    .pin-clear, .pin-enter { color: #888; font-size: 1rem; }
+    .pin-enter { background: #111; color: #fff; border-color: #111; }
+    .pin-enter:hover { background: #333; }
+
+    :root {
+      --bg:      #f7f7f7;
+      --surface: #ffffff;
+      --border:  #e4e4e4;
+      --text:    #111;
+      --muted:   #888;
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --blue:    #3b82f6;
+      --radius:  8px;
+      --shadow:  0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    #header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      height: 52px;
+    }
+
+    #header h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .btn-view {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .btn-view:hover { color: var(--text); border-color: #bbb; }
+
+    /* ---- Main layout ---- */
+    #main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* ---- Category section ---- */
+    .cat-section {}
+
+    .cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .cat-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-danger { background: #fee2e2; color: var(--red); }
+    .btn-danger:hover { background: #fecaca; }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: var(--bg); }
+
+    .btn-add-event {
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+      color: var(--muted);
+      width: 100%;
+      justify-content: center;
+      padding: 0.65rem;
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-add-event:hover {
+      border-color: #aaa;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* ---- Event card ---- */
+    .event-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 0.6rem;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .event-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .event-card.drag-over-card { box-shadow: 0 0 0 2px var(--blue); }
+
+    .event-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .event-drag-handle {
+      color: var(--border);
+      font-size: 1rem;
+      cursor: grab;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+
+    .event-name {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .event-name-input {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border: 1px solid var(--blue);
+      border-radius: 5px;
+      padding: 0.2rem 0.5rem;
+      outline: none;
+      color: var(--text);
+    }
+
+    .event-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .event-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: var(--bg); color: var(--text); }
+    .icon-btn.danger:hover { background: #fee2e2; color: var(--red); }
+
+    .chevron {
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .event-card.open .chevron { transform: rotate(90deg); }
+
+    /* ---- Photos panel ---- */
+    .photos-panel {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      background: #fafafa;
+    }
+    .event-card.open .photos-panel { display: block; }
+
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .photo-thumb {
+      position: relative;
+      aspect-ratio: 3/2;
+      border-radius: 5px;
+      overflow: hidden;
+      background: var(--border);
+      cursor: default;
+    }
+
+    .photo-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-delete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: none;
+      color: #fff;
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .photo-thumb:hover .photo-delete { opacity: 1; }
+
+    .cover-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    /* Upload tile */
+    .upload-tile {
+      aspect-ratio: 3/2;
+      border-radius: 5px;
+      border: 2px dashed var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .upload-tile:hover,
+    .upload-tile.drag-over {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: #eff6ff;
+    }
+    .upload-tile .plus { font-size: 1.6rem; line-height: 1; }
+
+    .upload-input { display: none; }
+
+    /* Drop zone overlay */
+    .drop-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(59,130,246,0.08);
+      border: 2px dashed var(--blue);
+      border-radius: var(--radius);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--blue);
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .photos-panel.drag-active .drop-overlay { display: flex; }
+    .photos-panel { position: relative; }
+
+    /* Uploading spinner overlay */
+    .uploading-indicator {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+    }
+    .uploading-indicator.active { display: flex; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ---- Add event inline form ---- */
+    .add-event-form {
+      background: var(--surface);
+      border: 1px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+
+    .add-event-form input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.9rem;
+      outline: none;
+      color: var(--text);
+    }
+    .add-event-form input:focus { border-color: var(--blue); }
+
+    /* ---- Empty state ---- */
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      padding: 1.5rem 1rem;
+    }
+
+    /* ---- Toast ---- */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      transition: transform 0.3s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div id="pinGate">
+  <div id="pinBox">
+    <p id="pinLabel">Enter PIN</p>
+    <div id="pinDots">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div id="pinPad">
+      <button class="pin-key" data-d="1">1</button>
+      <button class="pin-key" data-d="2">2</button>
+      <button class="pin-key" data-d="3">3</button>
+      <button class="pin-key" data-d="4">4</button>
+      <button class="pin-key" data-d="5">5</button>
+      <button class="pin-key" data-d="6">6</button>
+      <button class="pin-key" data-d="7">7</button>
+      <button class="pin-key" data-d="8">8</button>
+      <button class="pin-key" data-d="9">9</button>
+      <button class="pin-key pin-clear" id="pinClear">⌫</button>
+      <button class="pin-key" data-d="0">0</button>
+      <button class="pin-key pin-enter" id="pinEnter">→</button>
+    </div>
+  </div>
+</div>
+
+<div id="header">
+  <h1>Diego Jauregui — Admin</h1>
+  <div class="header-right">
+    <a href="/" target="_blank" class="btn-view">View Site ↗</a>
+  </div>
+</div>
+
+<div id="main">
+  <div class="cat-section" id="section-concert">
+    <div class="cat-header">
+      <span class="cat-title">Concerts</span>
+    </div>
+    <div class="events-list" id="list-concert"></div>
+    <button class="btn-add-event" onclick="showAddForm('concert')">+ Add Concert</button>
+  </div>
+
+  <div class="cat-section" id="section-sport">
+    <div class="cat-header">
+      <span class="cat-title">Sports</span>
+    </div>
+    <div class="events-list" id="list-sport"></div>
+    <button class="btn-add-event" onclick="showAddForm('sport')">+ Add Sport</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ================================================================
+   PIN GATE
+   ================================================================ */
+const PIN = '010712';
+const gate = document.getElementById('pinGate');
+
+if (sessionStorage.getItem('admin_auth') === '1') {
+  gate.classList.add('hidden');
+} else {
+  document.getElementById('header').style.visibility = 'hidden';
+  document.getElementById('main').style.visibility   = 'hidden';
+}
+
+let pinEntry = '';
+
+function updateDots() {
+  document.querySelectorAll('#pinDots span').forEach((dot, i) => {
+    dot.classList.toggle('filled', i < pinEntry.length);
+    dot.classList.remove('error');
+  });
+  document.getElementById('pinLabel').classList.remove('error');
+  document.getElementById('pinLabel').textContent = 'Enter PIN';
+}
+
+function tryPin() {
+  if (pinEntry === PIN) {
+    sessionStorage.setItem('admin_auth', '1');
+    gate.classList.add('hidden');
+    document.getElementById('header').style.visibility = '';
+    document.getElementById('main').style.visibility   = '';
+  } else {
+    document.querySelectorAll('#pinDots span').forEach(d => {
+      d.classList.remove('filled');
+      d.classList.add('error');
+    });
+    const lbl = document.getElementById('pinLabel');
+    lbl.textContent = 'Incorrect PIN';
+    lbl.classList.add('error');
+    pinEntry = '';
+    setTimeout(updateDots, 900);
+  }
+}
+
+document.querySelectorAll('.pin-key[data-d]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (pinEntry.length >= PIN.length) return;
+    pinEntry += btn.dataset.d;
+    updateDots();
+    if (pinEntry.length === PIN.length) setTimeout(tryPin, 120);
+  });
+});
+
+document.getElementById('pinClear').addEventListener('click', () => {
+  pinEntry = pinEntry.slice(0, -1);
+  updateDots();
+});
+
+document.getElementById('pinEnter').addEventListener('click', tryPin);
+
+document.addEventListener('keydown', e => {
+  if (gate.classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9' && pinEntry.length < PIN.length) {
+    pinEntry += e.key;
+    updateDots();
+    if (pinEntry.length === PIN.length) setTimeout(tryPin, 120);
+  } else if (e.key === 'Backspace') {
+    pinEntry = pinEntry.slice(0, -1);
+    updateDots();
+  } else if (e.key === 'Enter') {
+    tryPin();
+  }
+});
+
+/* ================================================================
+   DATA
+   ================================================================ */
+let events = [];
+
+/* ================================================================
+   LOAD
+   ================================================================ */
+async function load() {
+  const res  = await fetch('/api/data');
+  const data = await res.json();
+  events = data.events || [];
+  render();
+}
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+function render() {
+  renderCategory('concert');
+  renderCategory('sport');
+}
+
+function renderCategory(cat) {
+  const list = document.getElementById(`list-${cat}`);
+
+  /* remember which cards are open before re-render */
+  const openIds = new Set(
+    [...list.querySelectorAll('.event-card.open')].map(c => c.dataset.id)
+  );
+
+  list.innerHTML = '';
+  const catEvents = events.filter(e => e.category === cat);
+
+  if (catEvents.length === 0) {
+    list.innerHTML = `<div class="empty-state">No events yet — click "Add" below</div>`;
+    return;
+  }
+
+  catEvents.forEach(ev => {
+    const card = buildEventCard(ev);
+    if (openIds.has(ev.id)) card.classList.add('open');
+    list.appendChild(card);
+  });
+
+  initDrag(list, cat);
+}
+
+/* ================================================================
+   DRAG-TO-REORDER
+   ================================================================ */
+function initDrag(list, cat) {
+  let dragSrc = null;
+
+  list.querySelectorAll('.event-card').forEach(card => {
+    card.setAttribute('draggable', true);
+
+    card.addEventListener('dragstart', e => {
+      dragSrc = card;
+      card.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      dragSrc = null;
+      list.querySelectorAll('.event-card').forEach(c => {
+        c.style.opacity = '';
+        c.classList.remove('drag-over-card');
+      });
+    });
+
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (card !== dragSrc) {
+        list.querySelectorAll('.event-card').forEach(c => c.classList.remove('drag-over-card'));
+        card.classList.add('drag-over-card');
+      }
+    });
+
+    card.addEventListener('drop', async e => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === card) return;
+
+      /* reorder within the full events array */
+      const srcId  = dragSrc.dataset.id;
+      const dstId  = card.dataset.id;
+      const srcIdx = events.findIndex(e => e.id === srcId);
+      const dstIdx = events.findIndex(e => e.id === dstId);
+      const [moved] = events.splice(srcIdx, 1);
+      events.splice(dstIdx, 0, moved);
+
+      /* persist */
+      await fetch('/api/events', {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ events }),
+      });
+
+      render();
+      toast('Order saved');
+    });
+  });
+}
+
+function buildEventCard(ev) {
+  const card = document.createElement('div');
+  card.className = 'event-card';
+  card.dataset.id = ev.id;
+
+  /* ---- Row ---- */
+  const row = document.createElement('div');
+  row.className = 'event-row';
+
+  const handle = document.createElement('span');
+  handle.className = 'event-drag-handle';
+  handle.textContent = '⠿';
+  handle.title = 'Drag to reorder';
+
+  const name = document.createElement('span');
+  name.className = 'event-name';
+  name.textContent = ev.name;
+
+  const count = document.createElement('span');
+  count.className = 'event-count';
+  count.textContent = `${ev.photos.length} photo${ev.photos.length !== 1 ? 's' : ''}`;
+
+  const actions = document.createElement('div');
+  actions.className = 'event-actions';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'icon-btn';
+  editBtn.title = 'Rename';
+  editBtn.innerHTML = '✏️';
+  editBtn.addEventListener('click', e => { e.stopPropagation(); startRename(card, ev, name); });
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'icon-btn danger';
+  delBtn.title = 'Delete event';
+  delBtn.innerHTML = '🗑';
+  delBtn.addEventListener('click', e => { e.stopPropagation(); deleteEvent(ev.id); });
+
+  const chevron = document.createElement('span');
+  chevron.className = 'chevron';
+  chevron.textContent = '›';
+
+  actions.append(editBtn, delBtn);
+  row.append(handle, name, count, actions, chevron);
+
+  /* ---- Photos panel ---- */
+  const panel = buildPhotosPanel(ev, count);
+
+  row.addEventListener('click', () => {
+    card.classList.toggle('open');
+  });
+
+  card.append(row, panel);
+  return card;
+}
+
+/* ================================================================
+   PHOTOS PANEL
+   ================================================================ */
+function buildPhotosPanel(ev, countEl) {
+  const panel = document.createElement('div');
+  panel.className = 'photos-panel';
+
+  const dropOverlay = document.createElement('div');
+  dropOverlay.className = 'drop-overlay';
+  dropOverlay.textContent = 'Drop photos here';
+
+  const grid = document.createElement('div');
+  grid.className = 'photos-grid';
+
+  function renderPhotos() {
+    grid.innerHTML = '';
+
+    ev.photos.forEach((src, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'photo-thumb';
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.loading = 'lazy';
+
+      const del = document.createElement('button');
+      del.className = 'photo-delete';
+      del.innerHTML = '✕';
+      del.title = 'Remove photo';
+      del.addEventListener('click', () => deletePhoto(ev.id, src, thumb, countEl, ev));
+
+      thumb.append(img, del);
+
+      if (i === 0) {
+        const badge = document.createElement('span');
+        badge.className = 'cover-badge';
+        badge.textContent = 'Cover';
+        thumb.appendChild(badge);
+      }
+
+      grid.appendChild(thumb);
+    });
+
+    /* Upload tile */
+    const tile = document.createElement('div');
+    tile.className = 'upload-tile';
+    tile.innerHTML = '<span class="plus">+</span><span>Add photos</span>';
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.className = 'upload-input';
+    input.addEventListener('change', () => uploadPhotos(ev.id, input.files, grid, countEl, ev));
+
+    tile.addEventListener('click', () => input.click());
+    tile.appendChild(input);
+    grid.appendChild(tile);
+  }
+
+  renderPhotos();
+
+  /* Drag & drop into panel */
+  panel.addEventListener('dragenter', e => { e.preventDefault(); panel.classList.add('drag-active'); });
+  panel.addEventListener('dragover',  e => { e.preventDefault(); });
+  panel.addEventListener('dragleave', e => {
+    if (!panel.contains(e.relatedTarget)) panel.classList.remove('drag-active');
+  });
+  panel.addEventListener('drop', e => {
+    e.preventDefault();
+    panel.classList.remove('drag-active');
+    const files = e.dataTransfer.files;
+    if (files.length) uploadPhotos(ev.id, files, grid, countEl, ev);
+  });
+
+  const uploading = document.createElement('div');
+  uploading.className = 'uploading-indicator';
+  uploading.innerHTML = '<div class="spinner"></div><span>Uploading…</span>';
+  uploading.id = `uploading-${ev.id}`;
+
+  panel.append(dropOverlay, grid, uploading);
+
+  /* store renderPhotos so we can call it after mutations */
+  panel._renderPhotos = renderPhotos;
+
+  return panel;
+}
+
+/* ================================================================
+   UPLOAD PHOTOS
+   ================================================================ */
+async function uploadPhotos(eventId, files, grid, countEl, ev) {
+  if (!files || files.length === 0) return;
+
+  const ind = document.getElementById(`uploading-${eventId}`);
+  if (ind) ind.classList.add('active');
+
+  const formData = new FormData();
+  for (const f of files) formData.append('photos', f);
+
+  try {
+    const res  = await fetch(`/api/events/${eventId}/photos`, { method: 'POST', body: formData });
+    const data = await res.json();
+    ev.photos.push(...data.photos);
+    updateCount(countEl, ev.photos.length);
+    const card = document.querySelector(`.event-card[data-id="${eventId}"]`);
+    if (card) {
+      const panel = card.querySelector('.photos-panel');
+      if (panel && panel._renderPhotos) panel._renderPhotos();
+    }
+    toast(`${data.photos.length} photo${data.photos.length !== 1 ? 's' : ''} added`);
+  } catch (err) {
+    toast('Upload failed — try again');
+  } finally {
+    if (ind) ind.classList.remove('active');
+  }
+}
+
+/* ================================================================
+   DELETE PHOTO
+   ================================================================ */
+async function deletePhoto(eventId, src, thumbEl, countEl, ev) {
+  const filename = src.split('/').pop();
+  try {
+    await fetch(`/api/events/${eventId}/photos/${filename}`, { method: 'DELETE' });
+    ev.photos = ev.photos.filter(p => p !== src);
+    updateCount(countEl, ev.photos.length);
+    const card = document.querySelector(`.event-card[data-id="${eventId}"]`);
+    if (card) {
+      const panel = card.querySelector('.photos-panel');
+      if (panel && panel._renderPhotos) panel._renderPhotos();
+    }
+    toast('Photo removed');
+  } catch {
+    toast('Could not remove photo');
+  }
+}
+
+/* ================================================================
+   DELETE EVENT
+   ================================================================ */
+async function deleteEvent(id) {
+  if (!confirm('Delete this event and all its photos? This cannot be undone.')) return;
+  await fetch(`/api/events/${id}`, { method: 'DELETE' });
+  events = events.filter(e => e.id !== id);
+  render();
+  toast('Event deleted');
+}
+
+/* ================================================================
+   ADD EVENT FORM
+   ================================================================ */
+function showAddForm(category) {
+  /* Remove any existing open form */
+  document.querySelectorAll('.add-event-form').forEach(f => f.remove());
+
+  const list = document.getElementById(`list-${category}`);
+
+  const form = document.createElement('div');
+  form.className = 'add-event-form';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = category === 'concert' ? 'e.g. Arctic Monkeys' : 'e.g. Lakers vs Warriors';
+  input.autofocus = true;
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary';
+  saveBtn.textContent = 'Add';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => form.remove());
+
+  async function doAdd() {
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const res  = await fetch('/api/events', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, category }),
+    });
+    const ev = await res.json();
+    events.push(ev);
+    form.remove();
+    render();
+    /* auto-open the new card */
+    setTimeout(() => {
+      const card = document.querySelector(`.event-card[data-id="${ev.id}"]`);
+      if (card) card.classList.add('open');
+    }, 50);
+    toast(`"${ev.name}" added`);
+  }
+
+  saveBtn.addEventListener('click', doAdd);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); if (e.key === 'Escape') form.remove(); });
+
+  form.append(input, saveBtn, cancelBtn);
+  list.insertBefore(form, list.firstChild);
+  input.focus();
+}
+
+/* ================================================================
+   RENAME EVENT
+   ================================================================ */
+function startRename(card, ev, nameEl) {
+  const input = document.createElement('input');
+  input.className = 'event-name-input';
+  input.value = ev.name;
+
+  nameEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  async function commit() {
+    const name = input.value.trim() || ev.name;
+    await fetch(`/api/events/${ev.id}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name }),
+    });
+    ev.name = name;
+    nameEl.textContent = name;
+    input.replaceWith(nameEl);
+    toast('Renamed');
+  }
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { input.blur(); }
+    if (e.key === 'Escape') { input.value = ev.name; input.blur(); }
+  });
+}
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+function updateCount(el, n) {
+  el.textContent = `${n} photo${n !== 1 ? 's' : ''}`;
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+load();
+</script>
+</body>
+</html>
