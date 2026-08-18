@@ -181,6 +181,29 @@ body {
   z-index: 1001;
 }
 
+.lightbox-download {
+  position: fixed;
+  top: 18px;
+  right: 64px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1001;
+  padding: 7px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lightbox-download:hover { background: rgba(255,255,255,0.25); }
+
 .lightbox-arrow {
   position: fixed;
   top: 50%;

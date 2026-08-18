@@ -62,6 +62,14 @@ export default function EventClient({ event }: { event: PortfolioEvent }) {
       {lightbox && (
         <div className="lightbox-backdrop" onClick={closeLightbox}>
           <button className="lightbox-close" onClick={closeLightbox}>×</button>
+          <a
+            className="lightbox-download"
+            href={lightbox.photos[lightbox.index]}
+            download
+            onClick={e => e.stopPropagation()}
+          >
+            ↓ Download
+          </a>
           <button className="lightbox-arrow prev" onClick={e => { e.stopPropagation(); prevPhoto(); }}>‹</button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
