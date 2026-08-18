@@ -44,7 +44,7 @@ function localSave(data) {
 const DATA_KEY = 'portfolio/data.json';
 
 async function blobLoad() {
-  const { list } = require('@vercel/blob');
+  const { list } = await import('@vercel/blob');
   try {
     const { blobs } = await list({ prefix: DATA_KEY });
     if (blobs.length > 0) {
@@ -56,7 +56,7 @@ async function blobLoad() {
 }
 
 async function blobSave(data) {
-  const { put } = require('@vercel/blob');
+  const { put } = await import('@vercel/blob');
   await put(DATA_KEY, JSON.stringify(data, null, 2), {
     access: 'public',
     contentType: 'application/json',
@@ -137,7 +137,7 @@ app.delete('/api/events/:id', async (req, res) => {
     const ev   = data.events[idx];
 
     if (USE_BLOB && ev.photos.length > 0) {
-      const { del } = require('@vercel/blob');
+      const { del } = await import('@vercel/blob');
       await del(ev.photos);
     } else if (!USE_BLOB) {
       const dir = path.join(LOCAL_PHOTOS, req.params.id);
@@ -158,7 +158,7 @@ app.post('/api/events/:id/photos', upload.array('photos'), async (req, res) => {
 
     let added;
     if (USE_BLOB) {
-      const { put } = require('@vercel/blob');
+      const { put } = await import('@vercel/blob');
       added = await Promise.all(req.files.map(async file => {
         const ext      = path.extname(file.originalname).toLowerCase() || '.jpg';
         const filename = `${Date.now()}-${Math.floor(Math.random() * 1e6)}${ext}`;
@@ -195,7 +195,7 @@ app.delete('/api/events/:id/photo', async (req, res) => {
     ev.photos = ev.photos.filter(p => p !== src);
 
     if (USE_BLOB) {
-      const { del } = require('@vercel/blob');
+      const { del } = await import('@vercel/blob');
       await del(src);
     } else {
       const parts    = src.split('/');
