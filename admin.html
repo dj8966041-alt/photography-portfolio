@@ -893,9 +893,12 @@ async function uploadPhotos(eventId, files, grid, countEl, ev) {
    DELETE PHOTO
    ================================================================ */
 async function deletePhoto(eventId, src, thumbEl, countEl, ev) {
-  const filename = src.split('/').pop();
   try {
-    await fetch(`/api/events/${eventId}/photos/${filename}`, { method: 'DELETE' });
+    await fetch(`/api/events/${eventId}/photo`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ src }),
+    });
     ev.photos = ev.photos.filter(p => p !== src);
     updateCount(countEl, ev.photos.length);
     const card = document.querySelector(`.event-card[data-id="${eventId}"]`);
