@@ -19,3 +19,5 @@ out/
 *.pem
 npm-debug.log*
 fly.toml
+.vercel
+.env*
