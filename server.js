@@ -120,7 +120,7 @@ app.put('/api/events', (req, res) => {
   res.json({ ok: true });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`\n  Site  →  http://localhost:${PORT}`);
   console.log(`  Admin →  http://localhost:${PORT}/admin.html\n`);
