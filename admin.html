@@ -129,6 +129,18 @@
 
     .header-right { display: flex; align-items: center; gap: 1rem; }
 
+    .btn-publish {
+      background: #111;
+      color: #fff;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      border: none;
+    }
+    .btn-publish:hover { opacity: 0.8; }
+    .btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .btn-view {
       font-size: 0.78rem;
       color: var(--muted);
@@ -512,6 +524,7 @@
   <h1>Diego Jauregui — Admin</h1>
   <div class="header-right">
     <a href="/" target="_blank" class="btn-view">View Site ↗</a>
+    <button class="btn btn-publish" id="publishBtn" onclick="publish()">Publish to Website</button>
   </div>
 </div>
 
@@ -1023,6 +1036,25 @@ function toast(msg) {
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ================================================================
+   PUBLISH
+   ================================================================ */
+async function publish() {
+  const btn = document.getElementById('publishBtn');
+  btn.textContent = 'Publishing…';
+  btn.disabled = true;
+  try {
+    const res  = await fetch('/api/publish', { method: 'POST' });
+    const data = await res.json();
+    btn.textContent = data.ok ? '✓ Live!' : '✗ Failed';
+    toast(data.ok ? 'Site updated — live in ~30 seconds' : (data.message || 'Push failed'));
+  } catch {
+    btn.textContent = '✗ Failed';
+    toast('Could not reach server');
+  }
+  setTimeout(() => { btn.textContent = 'Publish to Website'; btn.disabled = false; }, 3000);
 }
 
 /* ================================================================

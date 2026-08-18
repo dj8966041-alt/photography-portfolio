@@ -14,7 +14,7 @@ let allEvents = [];
    ================================================================ */
 async function init() {
   try {
-    const res  = await fetch('/api/data');
+    const res  = await fetch('/data.json');
     const data = await res.json();
     allEvents  = data.events || [];
   } catch {
