@@ -79,10 +79,7 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 3/2;
-  object-fit: cover;
   transition: opacity 0.2s;
-  background: var(--muted);
 }
 
 .masonry-item:hover img { opacity: 0.85; }

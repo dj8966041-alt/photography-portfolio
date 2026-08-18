@@ -52,7 +52,7 @@ export default function EventClient({ event }: { event: PortfolioEvent }) {
                 onClick={() => setLightbox({ photos: event.photos, index: i })}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" loading="lazy" />
+                <img src={src} alt="" />
               </div>
             ))}
           </div>
