@@ -69,7 +69,7 @@ export default function HomeClient({ events }: { events: PortfolioEvent[] }) {
                 >
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cover} alt={event.name} loading="lazy" />
+                    <img src={cover} alt={event.name} />
                   ) : (
                     <div className="placeholder">📷</div>
                   )}
